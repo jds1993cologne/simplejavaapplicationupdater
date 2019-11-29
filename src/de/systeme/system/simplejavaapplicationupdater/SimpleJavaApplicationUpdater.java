@@ -1,15 +1,27 @@
 package de.systeme.system.simplejavaapplicationupdater;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 
 public class SimpleJavaApplicationUpdater {
 	
-	public static void updateProceder(UpdateableClass mainClass, URL link, String actualVersion, Proxy proxy) {
+	/**
+	 * checks wheather a newer version is avaiable and downloads it as second jar, if a newer version is avaiable
+	 * 
+	 * @param mainClass		the parent class
+	 * @param link			the link to the folder on the server
+	 * @param jarName		the name of the jar file
+	 * @param actualVersion	the actual version of the software 
+	 * @param proxy			the proxy for connection
+	 */
+	public static void updateProceder(UpdateableClass mainClass, URL link, String jarName, String actualVersion, Proxy proxy) {
 
 		mainClass.startVersionCheck();
 		
@@ -27,22 +39,46 @@ public class SimpleJavaApplicationUpdater {
 		
 		if(versionCompare(actualAvaiableVersion, actualVersion) < 0) {
 
-			//TODO Hier Quelltext einfügen
+			try {
+				
+				downloadFile(new URL(link.toString() + jarName + "V" + actualAvaiableVersion + ".jar"), jarName + "2.jar", proxy);
+				
+				mainClass.downloadSucessfull();
+				
+			} catch (IOException e) {
+
+				mainClass.downloadFailed();
+				
+				e.printStackTrace();
+				
+			}
 			
 		} else {
-
 			mainClass.actualVersionInstalled();
-			
-			return;
-				
 		}
 		
 	}
 	
-	public static void updateProceder(UpdateableClass mainClass, URL link, String actualVersion) {
-		updateProceder(mainClass, link, actualVersion, null);
+	/**
+	 * checks wheather a newer version is avaiable and downloads it as second jar, if a newer version is avaiable
+	 * 
+	 * @param mainClass		the parent class
+	 * @param link			the link to the folder on the server
+	 * @param jarName		the name of the jar file
+	 * @param actualVersion	the actual version of the software 
+	 */
+	public static void updateProceder(UpdateableClass mainClass, URL link, String jarName, String actualVersion) {
+		updateProceder(mainClass, link, jarName, actualVersion, null);
 	}
 
+	/**
+	 * loads the actual version from the online file actualversion.txt
+	 * 
+	 * @param 	link		the url to the folder on the webspace
+	 * @param 	proxy		if it is needed, the proxy for connection
+	 * @return	String		the on the server saved actual version
+	 * @throws 	IOException	thrown if the connection failed
+	 */
 	protected static String getActualVersionFromURL(URL link, Proxy proxy) throws IOException {
 		
 		URLConnection connection;
@@ -102,4 +138,46 @@ public class SimpleJavaApplicationUpdater {
 	    
 	}
 
+	/**
+	 * load a file from an webserver and saves it
+	 * 
+	 * @param pathOnServer	url of the file
+	 * @param pathToFile	place to save
+	 * @param proxy			if it is needed, the proxy for connection
+	 * @throws IOException	thrown if it fails
+	 */
+	protected static void downloadFile(URL pathOnServer, String pathToFile, Proxy proxy) throws IOException {
+
+		FileOutputStream fos = new FileOutputStream(pathToFile);
+
+		HttpURLConnection conn;
+
+		if(proxy == null){
+			conn = (HttpURLConnection) pathOnServer.openConnection();
+		} else {
+			conn = (HttpURLConnection) pathOnServer.openConnection(proxy);
+		}
+			
+		conn.setRequestMethod("GET");
+
+		conn.connect();
+
+		byte tmp_buffer[] = new byte[4096];
+		InputStream is = conn.getInputStream();
+		int n;
+			
+		StringBuilder sb = new StringBuilder();
+
+		while ((n = is.read(tmp_buffer)) > 0) {
+		
+			fos.write(tmp_buffer, 0, n);
+			sb.append(tmp_buffer);
+			fos.flush();
+
+		}
+			
+		fos.close();
+
+	}
+	
 }

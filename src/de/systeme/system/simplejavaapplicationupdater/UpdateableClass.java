@@ -7,5 +7,9 @@ public interface UpdateableClass {
 	public void actualVersionCheckFailed();
 
 	public void actualVersionInstalled();
+
+	public void downloadSucessfull();
+
+	public void downloadFailed();
 	
 }

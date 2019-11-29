@@ -1,25 +1,36 @@
 package de.systeme.system.simplejavaapplicationupdater;
 
-import java.awt.Frame;
+import java.awt.Component;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URL;
 
+import javax.swing.JOptionPane;
+
 public class SimpleJavaApplicationUpdaterUI extends SimpleJavaApplicationUpdater {
 
-	public static void updateProceder(Frame mainFrame, URL link, String actualVersion, Proxy proxy) {
+	/**
+	 * checks wheather a newer version is avaiable and downloads it as second jar, if a newer version is avaiable
+	 * 
+	 * @param mainFrame		the parent component
+	 * @param link			the link to the folder on the server
+	 * @param jarName		the name of the jar file
+	 * @param actualVersion	the actual version of the software  
+	 * @param proxy			the proxy for connection
+	 */
+	public static void updateProceder(Component parentComponent, URL link, String jarName, String actualVersion, Proxy proxy) {
 		
-		//TODO Hier Quelltext ändern
-		System.out.println("Check actual avaiable version");
-		
+		UpdaterProgressMonitor progressMonitor = new UpdaterProgressMonitor(parentComponent, "Check actual avaiable version");
+
 		String actualAvaiableVersion = "";
 		
 		try {
 			actualAvaiableVersion = getActualVersionFromURL(link, proxy);
 		} catch (IOException ioe) {
 
-			//TODO Hier Quelltext ändern
-			System.out.println("Could not load actual version");
+			progressMonitor.dismiss();
+			
+			JOptionPane.showMessageDialog(parentComponent, "Could not load actual version", "Error", JOptionPane.ERROR_MESSAGE);
 			
 			return;
 			
@@ -27,21 +38,44 @@ public class SimpleJavaApplicationUpdaterUI extends SimpleJavaApplicationUpdater
 		
 		if(versionCompare(actualAvaiableVersion, actualVersion) < 0) {
 
-			//TODO Hier Quelltext einfügen
+			try {
+				
+				progressMonitor.setText("Downloading new Version");
+				
+				downloadFile(new URL(link.toString() + jarName + "V" + actualAvaiableVersion + ".jar"), jarName + "2.jar", proxy);
+				
+				JOptionPane.showMessageDialog(parentComponent, "Succesful downloaded the new version", "Updater", JOptionPane.INFORMATION_MESSAGE);
+				
+			} catch (IOException e) {
+
+				progressMonitor.dismiss();
+				
+				JOptionPane.showMessageDialog(parentComponent, "Download of the new version failed", "Error", JOptionPane.ERROR_MESSAGE);
+				
+				e.printStackTrace();
+				
+			}
 			
 		} else {
 
-			//TODO Hier Quelltext ändern
-			System.out.println("The installed version is the newest");
+			progressMonitor.dismiss();
 			
-			return;
+			JOptionPane.showMessageDialog(parentComponent, "The installed version is the newest", "Updater", JOptionPane.INFORMATION_MESSAGE);
 				
 		}
 		
 	}
 	
-	public static void updateProceder(Frame mainFrame, URL link, String actualVersion) {
-		updateProceder(mainFrame, link, actualVersion, null);
+	/**
+	 * checks wheather a newer version is avaiable and downloads it as second jar, if a newer version is avaiable
+	 * 
+	 * @param mainFrame		the parent component
+	 * @param link			the link to the folder on the server
+	 * @param jarName		the name of the jar file
+	 * @param actualVersion	the actual version of the software 
+	 */
+	public static void updateProceder(Component parentComponent, URL link, String jarName, String actualVersion) {
+		updateProceder(parentComponent, link, jarName, actualVersion, null);
 	}
 	
 }
